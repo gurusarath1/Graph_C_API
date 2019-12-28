@@ -61,8 +61,16 @@ int main()
 
 	Graph g = CreateGraph(x, size, UNDIRECTED);
 	CreateEdge(&g, 0, 2, 1);
-	CreateEdge(&g, 1, 4, 1);
+	CreateEdge(&g, 0, 4, 1);
 	CreateEdge(&g, 0, 5, 1);
+	CreateEdge(&g, 3, 5, 4);
+	CreateEdge(&g, 4, 5, 4);
+	CreateEdge(&g, 2, 4, 4);
+	CreateEdge(&g, 2, 3, 4);
+	CreateEdge(&g, 1, 6, 4);
+	CreateEdge(&g, 6, 5, 4);
+	CreateEdge(&g, 6, 2, 4);
+	CreateEdge(&g, 5, 1, 4);
 
 	printGraph(g);
 
@@ -95,17 +103,17 @@ Graph CreateGraph(DATATYPE vertexNames[], int numVertex, Graph_Type type)
 errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
 {
 
-	GraphEdge* edge = g_ptr->VertexArray[startVertex].EdgeList;
+	GraphEdge** edge = &(g_ptr->VertexArray[startVertex].EdgeList);
 
-	GraphEdge* prevEdge = edge;
+	GraphEdge** prevEdge = edge;
 
-	if(edge != NULL)
+	if(*edge != NULL)
 	{
 		printf("\nNULL");
-		while(edge != NULL)
+		while(*edge != NULL)
 		{
 			prevEdge = edge;
-			edge = edge->NextEdge;
+			edge = &((*edge)->NextEdge);
 		}
 
 	} else {
@@ -113,20 +121,20 @@ errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
 		printf("\nElse");
 
 
-		prevEdge = (GraphEdge*) malloc(sizeof(GraphEdge));
-		prevEdge->NextEdge = NULL;
-		prevEdge->ToVertex = endVertex;
-		prevEdge->cost = cost;
+		(*prevEdge) = (GraphEdge*) malloc(sizeof(GraphEdge));
+		(*prevEdge)->NextEdge = NULL;
+		(*prevEdge)->ToVertex = endVertex;
+		(*prevEdge)->cost = cost;
 
 		g_ptr->E += 1;
 
 		return SUCCESS;
 	}
 
-	prevEdge->NextEdge = (GraphEdge*) malloc(sizeof(GraphEdge));
-	prevEdge->NextEdge->NextEdge = NULL;
-	prevEdge->NextEdge->ToVertex = endVertex;
-	prevEdge->NextEdge->cost = cost;
+	(*prevEdge)->NextEdge = (GraphEdge*) malloc(sizeof(GraphEdge));
+	(*prevEdge)->NextEdge->NextEdge = NULL;
+	(*prevEdge)->NextEdge->ToVertex = endVertex;
+	(*prevEdge)->NextEdge->cost = cost;
 
 	g_ptr->E += 1;
 	return SUCCESS;
@@ -141,7 +149,7 @@ void printGraph(Graph g)
 
 	for(int i=0; i<g.V; i++)
 	{
-		printf("\n%d : ", vtxAry[i].vertexID);
+		printf("\n%d (%c): ", vtxAry[i].vertexID, *(vtxAry[i].name));
 
 		edge = g.VertexArray[i].EdgeList;
 
