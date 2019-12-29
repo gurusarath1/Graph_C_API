@@ -60,8 +60,8 @@ void printGraph(Graph g);
 int* getConnectedVertices(Graph* g_ptr, int startVertex, int* NumberOfConnectedVerticesReturn);
 YES_NO isVertex(Graph*g , int vertex);
 YES_NO isConnected(Graph* g, int startVertex, int endVertex);
-
-
+errorCode DeleteEdge(Graph* g_ptr, int startVertex, int endVertex);
+errorCode deleteVertex(Graph* g_ptr, int Vertex);
 
 
 int main()
@@ -81,6 +81,23 @@ int main()
 
 	CreateEdge(&g, 1, 2, 1);
 	CreateEdge(&g, 4, 2, 2);
+
+	printGraph(g);
+
+	int n = 0;
+	int *a = getConnectedVertices(&g, 4, &n);
+
+	printf("\nNumber of connections to vertex 4 = %d\n", n);
+	for(int i=0; i<n; i++)
+	{
+		printf("%d  ", a[i]);
+	}
+
+	printf("\n");
+
+	DeleteEdge(&g, 0, 2);
+	DeleteEdge(&g, 4, 3);
+	DeleteEdge(&g, 3, 1);
 
 	printGraph(g);
 
@@ -173,6 +190,10 @@ void printGraph(Graph g)
 	GraphVertex* vtxAry = g.VertexArray;
 	GraphEdge* edge;
 
+	printf("\n===================================\n");
+	printf("Graph:   V = %d     E = %d", g.V, g.E);
+	printf("\n===================================\n");
+
 	for(int i=0; i<g.V; i++)
 	{
 		printf("\n%d (%c - %d): ", vtxAry[i].VertexID, *(vtxAry[i].Name), vtxAry[i].NumConnections);
@@ -242,6 +263,46 @@ YES_NO isConnected(Graph* g_ptr, int startVertex, int endVertex)
 		edge = edge->NextEdge;
 	}
 
-	printf("\nNOP");
 	return NO;
+}
+
+errorCode DeleteEdge(Graph* g_ptr, int startVertex, int endVertex)
+{
+
+	if(!isConnected(g_ptr, startVertex, endVertex))
+	{
+		printf("\nConnection does not exist !\nNo connection deleted");
+		return SUCCESS;
+	}
+
+	GraphEdge** edge = &( (g_ptr->VertexArray)[startVertex].EdgeList );
+	GraphEdge** prevEdge = edge;
+	GraphEdge** nextEdge = &((*edge)->NextEdge);
+
+	while(*edge != NULL)
+	{
+		prevEdge = edge;
+		nextEdge = &((*edge)->NextEdge);
+
+		if((*edge)->ToVertex == endVertex)
+		{
+			free(*edge);
+			*prevEdge = *nextEdge;
+			break;
+		}
+
+		edge = &((*edge)->NextEdge);
+	}
+
+	g_ptr->E -= 1;
+	(g_ptr->VertexArray)[startVertex].NumConnections -= 1;
+	return SUCCESS;
+}
+
+errorCode deleteVertex(Graph* g_ptr, int Vertex)
+{
+
+
+
+
 }
