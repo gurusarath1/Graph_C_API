@@ -17,6 +17,12 @@ typedef enum Graph_Type
 
 }Graph_Type;
 
+typedef enum YES_NO
+{
+	NO,
+	YES
+}YES_NO;
+
 typedef struct GraphVertex GraphVertex;
 
 typedef struct GraphEdge GraphEdge;
@@ -24,21 +30,22 @@ typedef struct GraphEdge GraphEdge;
 struct GraphEdge
 {
 	int ToVertex;
-	double cost;
+	double Cost;
 	GraphEdge* NextEdge;
 };
 
 struct GraphVertex
 {
-	DATATYPE* name;
-	int vertexID;
+	DATATYPE* Name;
+	int VertexID;
+	int NumConnections; //Number of outgoing connections
 	GraphEdge* EdgeList;
 };
 
 typedef struct Graph
 {
 	int V,E;
-	Graph_Type type;
+	Graph_Type Type;
 	GraphVertex* VertexArray;
 } Graph;
 
@@ -46,31 +53,34 @@ typedef struct Graph
 
 
 
+errorCode createEdgeUtil(Graph* g_ptr, int startVertex, int endVertex, int cost);
 errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost);
 Graph CreateGraph(DATATYPE vertexNames[], int numVertex, Graph_Type type);
 void printGraph(Graph g);
-
+int* getConnectedVertices(Graph* g_ptr, int startVertex, int* NumberOfConnectedVerticesReturn);
+YES_NO isVertex(Graph*g , int vertex);
+YES_NO isConnected(Graph* g, int startVertex, int endVertex);
 
 
 
 
 int main()
 {
-	DATATYPE x[] = {'A','B','C','D','E','F','G'};
+	DATATYPE x[] = {'A','B','C','D','E'};
 	int size = sizeof(x)/sizeof(DATATYPE);
 
-	Graph g = CreateGraph(x, size, UNDIRECTED);
+	Graph g = CreateGraph(x, size, DIRECTED);
 	CreateEdge(&g, 0, 2, 1);
+	CreateEdge(&g, 1, 2, 1);
+	CreateEdge(&g, 3, 1, 1);
+	CreateEdge(&g, 4, 3, 1);
 	CreateEdge(&g, 0, 4, 1);
-	CreateEdge(&g, 0, 5, 1);
-	CreateEdge(&g, 3, 5, 4);
-	CreateEdge(&g, 4, 5, 4);
-	CreateEdge(&g, 2, 4, 4);
-	CreateEdge(&g, 2, 3, 4);
-	CreateEdge(&g, 1, 6, 4);
-	CreateEdge(&g, 6, 5, 4);
-	CreateEdge(&g, 6, 2, 4);
-	CreateEdge(&g, 5, 1, 4);
+	CreateEdge(&g, 0, 3, 1);
+	CreateEdge(&g, 1, 3, 1);
+	CreateEdge(&g, 4, 2, 1);
+
+	CreateEdge(&g, 1, 2, 1);
+	CreateEdge(&g, 4, 2, 2);
 
 	printGraph(g);
 
@@ -86,21 +96,22 @@ Graph CreateGraph(DATATYPE vertexNames[], int numVertex, Graph_Type type)
 
 	for(int i=0; i<numVertex; i++)
 	{
-		v_ary[i].name = &vertexNames[i];
-		v_ary[i].vertexID = i;
+		v_ary[i].Name = &vertexNames[i];
+		v_ary[i].VertexID = i;
 		v_ary[i].EdgeList = NULL;
+		v_ary[i].NumConnections = 0;
 	}
 
 	g.V = numVertex;
 	g.E = 0;
-	g.type = type;
+	g.Type = type;
 	g.VertexArray = v_ary;
 
 	return g;
 }
 
 
-errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
+errorCode createEdgeUtil(Graph* g_ptr, int startVertex, int endVertex, int cost)
 {
 
 	GraphEdge** edge = &(g_ptr->VertexArray[startVertex].EdgeList);
@@ -109,7 +120,6 @@ errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
 
 	if(*edge != NULL)
 	{
-		printf("\nNULL");
 		while(*edge != NULL)
 		{
 			prevEdge = edge;
@@ -118,15 +128,13 @@ errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
 
 	} else {
 
-		printf("\nElse");
-
-
 		(*prevEdge) = (GraphEdge*) malloc(sizeof(GraphEdge));
 		(*prevEdge)->NextEdge = NULL;
 		(*prevEdge)->ToVertex = endVertex;
-		(*prevEdge)->cost = cost;
+		(*prevEdge)->Cost = cost;
 
 		g_ptr->E += 1;
+		g_ptr->VertexArray[startVertex].NumConnections += 1;
 
 		return SUCCESS;
 	}
@@ -134,9 +142,28 @@ errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
 	(*prevEdge)->NextEdge = (GraphEdge*) malloc(sizeof(GraphEdge));
 	(*prevEdge)->NextEdge->NextEdge = NULL;
 	(*prevEdge)->NextEdge->ToVertex = endVertex;
-	(*prevEdge)->NextEdge->cost = cost;
+	(*prevEdge)->NextEdge->Cost = cost;
+
 
 	g_ptr->E += 1;
+	g_ptr->VertexArray[startVertex].NumConnections += 1;
+	return SUCCESS;
+}
+
+errorCode CreateEdge(Graph* g_ptr, int startVertex, int endVertex, int cost)
+{
+
+	if(isConnected(g_ptr, startVertex, endVertex))
+	{
+		printf("\nConnection Already exist!\nNo new connection created.");
+		return SUCCESS;
+	}
+
+	createEdgeUtil(g_ptr, startVertex, endVertex, cost);
+
+	if(g_ptr->Type == UNDIRECTED)
+		createEdgeUtil(g_ptr, endVertex, startVertex, cost);
+
 	return SUCCESS;
 }
 
@@ -146,10 +173,9 @@ void printGraph(Graph g)
 	GraphVertex* vtxAry = g.VertexArray;
 	GraphEdge* edge;
 
-
 	for(int i=0; i<g.V; i++)
 	{
-		printf("\n%d (%c): ", vtxAry[i].vertexID, *(vtxAry[i].name));
+		printf("\n%d (%c - %d): ", vtxAry[i].VertexID, *(vtxAry[i].Name), vtxAry[i].NumConnections);
 
 		edge = g.VertexArray[i].EdgeList;
 
@@ -162,5 +188,60 @@ void printGraph(Graph g)
 	}
 
 	printf("\n");
+}
 
+int* getConnectedVertices(Graph* g_ptr, int startVertex, int* NumberOfConnectedVerticesReturn)
+{
+	GraphVertex v = (g_ptr->VertexArray)[startVertex];
+	GraphEdge* edge;
+	edge = v.EdgeList;
+
+	*NumberOfConnectedVerticesReturn = v.NumConnections;
+
+	int* a = (int*)malloc(sizeof(int) * v.NumConnections);
+	int i = 0;
+	while(edge != NULL)
+	{
+		a[i++] = edge->ToVertex;
+		edge = edge->NextEdge;
+	}
+
+	return a;
+}
+
+YES_NO isVertex(Graph*g , int vertex)
+{
+
+	if(vertex < 0 || vertex >= g->V)
+	{
+		return NO;
+	}
+
+	return YES;
+}
+
+YES_NO isConnected(Graph* g_ptr, int startVertex, int endVertex)
+{
+
+	if(!(isVertex(g_ptr, startVertex) && isVertex(g_ptr, endVertex)))
+	{
+		printf("\nVertex not found in graph");
+		return NO; //Vertex not found
+	}
+
+	GraphVertex v = (g_ptr->VertexArray)[startVertex];
+	GraphEdge* edge;
+	edge = v.EdgeList;
+
+	while(edge != NULL)
+	{
+		if(edge->ToVertex == endVertex)
+		{
+			return YES;
+		}
+		edge = edge->NextEdge;
+	}
+
+	printf("\nNOP");
+	return NO;
 }
