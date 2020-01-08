@@ -32,3 +32,4 @@ errorCode_2 push(Stack* s_ptr, STACK_DATA x);
 errorCode_2 pop(Stack* s_ptr, STACK_DATA* returnValue);
 YES_NO_2 Stack_isEmpty(Stack* s_ptr);
 YES_NO_2 Stack_isFull(Stack* s_ptr);
+STACK_DATA* stackToArray(Stack* s_ptr, int* sizeToReturn);

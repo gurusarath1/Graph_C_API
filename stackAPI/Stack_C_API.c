@@ -63,3 +63,28 @@ YES_NO_2 Stack_isFull(Stack* s_ptr)
 
 	return NO_2;
 }
+
+STACK_DATA* stackToArray(Stack* s_ptr, int* sizeToReturn)
+{
+
+	int size = s_ptr->Size;
+
+        STACK_DATA *a = (STACK_DATA*) malloc(sizeof(STACK_DATA) * size);
+        STACK_DATA temp;
+        int i = 0;
+
+        while(!Stack_isEmpty(s_ptr))
+        {
+                pop(s_ptr, &temp);
+                a[i++] = temp;
+        }
+
+	for(int j=i-1; j>=0; j--)
+	{
+		push(s_ptr, a[j]);
+	}
+
+	*sizeToReturn = i;
+
+        return a;
+}
